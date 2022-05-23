@@ -1,0 +1,308 @@
+<!--
+@package:templates.sys
+@Author:旁观者
+@Date:2022/5/21-15:23
+@By:IntelliJ IDEA
+@FileName:menu.html
+-->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/static/lib/layui-v2.6.3/css/layui.css}" media="all">
+    <link rel="stylesheet" th:href="@{/static/lib/font-awesome-4.7.0/css/font-awesome.min.css}">
+    <link rel="stylesheet" th:href="@{/static/css/public.css}">
+    <style>
+        .layui-btn:not(.layui-btn-lg ):not(.layui-btn-sm):not(.layui-btn-xs) {
+            height: 34px;
+            line-height: 34px;
+            padding: 0 8px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layuimini-container">
+        <div class="layuimini-main">
+            <div>
+                <div class="layui-btn-group">
+                    <button class="layui-btn" id="btn-expand">全部展开</button>
+                    <button class="layui-btn layui-btn-normal" id="btn-fold">全部折叠</button>
+                </div>
+                <table id="menu-table" class="layui-table" lay-filter="menu-table"></table>
+            </div>
+        </div>
+    </div>
+
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加 </button>
+            <button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete"> 刷新 </button>
+        </div>
+    </script>
+
+    <!-- 操作列 -->
+    <script type="text/html" id="auth-state">
+        <a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="edit">修改</a>
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="re">删除</a>
+    </script>
+
+    <div class="layui-panel" id="editPanel" style="display: none">
+        <form class="layui-form" lay-filter="editMenu" id="editMenu">
+            <div class="layui-form-item" style="display: none">
+                <label class="layui-form-label required">菜单Id</label>
+                <div class="layui-input-block">
+                    <input type="number" name="id" value="" class="layui-input">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">菜单名称</label>
+                <div class="layui-input-block">
+                    <input type="text" name="title" class="layui-input" lay-verify="required"
+                    required="菜单名称不能为空" placeholder="请输入菜单名称">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">菜单图标</label>
+                <div class="layui-input-block">
+                    <input type="text" name="icon" id="iconPicker" lay-filter="iconPicker" class="hide">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">链接打开方式</label>
+                <div class="layui-input-block">
+                    <select name="target">
+                        <option value="_self" selected>_self</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">菜单类型</label>
+                <div class="layui-input-block">
+                    <select name="type">
+                        <option value="3" selected>目录</option>
+                        <option value="4">菜单</option>
+                        <option value="5">按钮</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">菜单链接</label>
+                <div class="layui-input-block">
+                    <input type="text" class="layui-input" name="href" placeholder="请输入菜单链接">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">排序号</label>
+                <div class="layui-input-block">
+                    <input type="number" class="layui-input" name="orderNum" placeholder="请输入排序号">
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">上级菜单</label>
+                <div class="layui-input-block">
+                    <select name="pId" id="pMenuSelect" lay-filter="pMenuSelect">
+                        <option value="0">无上级菜单</option>
+                    </select>
+                </div>
+            </div>
+            <div class="layui-form-item">
+                <div class="layui-input-block">
+                    <button id="saveBtn" class="layui-btn layui-btn-normal" type="submit" value="" lay-submit lay-filter="saveBtn">确认保存</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <script th:src="@{/static/js/script.js}"></script>
+    <script th:src="@{/static/lib/layui-v2.6.3/layui.js}"></script>
+    <script th:src="@{/static/js/lay-config.js}"></script>
+    <script th:inline="javascript">
+        layui.use(['jquery','table','treetable','iconPickerFa','form'],function(){
+            var table = layui.table,
+                treeTable = layui.treetable,
+                layer = layui.layer,
+                iconPicker = layui.iconPickerFa,
+                form = layui.form,
+                $ = layui.jquery;
+
+            layer.load(2);
+            treeTable.render({
+                treeColIndex: 1,
+                treeSpid: 0,
+                treeIdName: 'id',
+                treePidName: 'pid',
+                isPidData:true,
+                openName: 'open',
+                elem: '#menu-table',
+                toolbar:'#toolbarDemo',
+                url: getRootPath()+'/sys/menu/list',
+                method:'post',
+                page: false,
+                cols: [
+                    [
+                        {type: 'numbers'},
+                        {field: 'title', minWidth: 200, title: '名称'},
+                        {field:'icon',minWidth: 50,title: '图标',templet:function (menu) {
+                                return '<i class="fa '+menu.icon+'"></i>';
+                            }},
+                        {field: 'target', title: '链接打开方式'},
+                        {field: 'href', title: '菜单url'},
+                        {field: 'orderNum', width: 80, align: 'center', title: '排序号'},
+                        {field: 'type', align: 'center' ,title: '菜单类型',templet: function (d){
+                                if(d.type === 3){
+                                    return '<span class="layui-bange layui-bg-blue">目录</span>';
+                                }else if(d.type===4){
+                                    return '<span class="layui-bange layui-bg-blue">菜单</span>';
+                                }
+                            }},
+                        {templet: '#auth-state', width: 120, align: 'center', title: '操作'}
+                    ]
+                ],
+                tree:{
+                    getIcon:function(curr){
+                        return '<i class="'+curr.icon+'"></i>';
+                    }
+                },
+                response:{
+                    statusName: 'code' //规定数据状态的字段名称，默认：code
+                    ,statusCode: 200 //规定成功的状态码，默认：0
+                    ,msgName: 'message' //规定状态信息的字段名称，默认：msg
+                    ,countName: 'count' //规定数据总数的字段名称，默认：count
+                    ,dataName: 'data' //规定数据列表的字段名称，默认：data
+                },
+                done: function () {
+                    layer.closeAll('loading');
+                }
+            });
+
+            $('#btn-expand').click(function () {
+                treeTable.expandAll('#menu-table');
+            });
+
+            $('#btn-fold').click(function () {
+                treeTable.foldAll('#menu-table');
+            });
+
+            //监听工具条
+            table.on('tool(menu-table)', function (obj) {
+                var data = obj.data;
+                var layEvent = obj.event;
+
+                if (layEvent === 'del') {
+                    layer.msg('删除' + data.id);
+                } else if (layEvent === 'edit') {
+                    layer.msg('修改' + data.id);
+                }
+            });
+
+            table.on('toolbar(menu-table)',function(obj){
+                if(obj.event === 'add'){
+                    var index = layer.open({
+                        title: '添加菜单',
+                        type: 1,
+                        shade: 0.2,
+                        maxmin:true,
+                        shadeClose: true,
+                        area: ['50%', '100%'],
+                        content: $('#editPanel'),
+                        success:function(){
+                            $('#editMenu')[0].reset();
+                            $('#saveBtn').attr("value","add");
+                        }
+                    });
+                }else if(obj.event === 're'){
+                    treeTable.refresh('#menu-table');
+                }
+                return false;
+            });
+
+            form.on('submit(saveBtn)',function(data){
+                let field = data.field;
+                let result = {};
+                let postUrl = getRootPath()+"/sys/menu/"+$('#saveBtn').attr('value');
+                if($('#saveBtn').attr('value') === 'edit'){
+                    result['id']=field.id;
+                }
+                result['title']=field.title;
+                if (field.icon != '' || field.icon.length != 0)
+                result['icon']=field.icon;
+                if(field.href != '' || field.href.length != 0){
+                    result['href']=field.href;
+                }
+                result['pId']=field.pId;
+                result['type']=field.type;
+                result['target']=field.target;
+                result['orderNum']=field.orderNum;
+                $.post(postUrl,JSON.stringify(result),function (data) {
+                    if(data){
+                        layer.msg("成功保存操作");
+                        treeTable.refresh('#menu-table');
+                    }else{
+                        layer.msg("保存操作失败！");
+                    }
+                    layer.closeAll('page');
+                });
+                // $.ajax({
+                //     url:postUrl,
+                //     type:'post',
+                //     dataType:'json',
+                //     contentType:"application/json;charset=utf-8",
+                //     traditional: true,
+                //     data:JSON.stringify(result),
+                //     success:function(data){
+                //         if(data){
+                //             layer.msg("成功保存操作");
+                //             treeTable.refresh('#menu-table');
+                //         }else{
+                //             layer.msg("保存操作失败！");
+                //         }
+                //         layer.closeAll('page');
+                //     },
+                // });
+                return false;
+            });
+
+            initPid();
+
+            function initPid(){
+                $.post(getRootPath()+"/sys/menu/list",function (result) {
+                    let select = $('#pMenuSelect');
+                    let data = result.data;
+                    $(select).children('option').remove();
+                    $(select).append(new Option("无上级菜单",0,true,true));
+                    for (let i = 0; i < data.length; i++){
+                        $(select).append(new Option(data[i].title,data[i].id));
+                    }
+                    form.render('select');
+                });
+            }
+
+            iconPicker.render({
+                // 选择器，推荐使用input
+                elem: '#iconPicker',
+                // type: 'awesome',
+                // fa 图标接口
+                url: getRootPath()+"/static/lib/font-awesome-4.7.0/less/variables.less",
+                // 是否开启搜索：true/false，默认true
+                search: true,
+                // 是否开启分页：true/false，默认true
+                page: true,
+                // 每页显示数量，默认12
+                limit: 12,
+                //默认显示图标
+                // value:'',
+                // 点击回调
+                click: function (data) {
+                    // console.log(data);
+                },
+                // 渲染成功后的回调
+                success: function (d) {
+                    // console.log(d);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

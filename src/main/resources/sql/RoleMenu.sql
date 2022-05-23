@@ -1,0 +1,9 @@
+-- auto Generated on 2022-05-14
+-- DROP TABLE IF EXISTS role_menu;
+CREATE TABLE role_menu(
+	id INT (11) NOT NULL AUTO_INCREMENT COMMENT 'id',
+	role_id INT (11) NOT NULL DEFAULT -1 COMMENT '角色id',
+	menu_id INT (11) NOT NULL DEFAULT -1 COMMENT '权限id',
+	remark VARCHAR (50) NOT NULL DEFAULT '' COMMENT '备注',
+	PRIMARY KEY (id)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT 'role_menu';

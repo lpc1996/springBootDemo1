@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>后台管理-登陆</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="stylesheet" th:href="@{/static/lib/layui-v2.6.3/css/layui.css}" media="all">
+    <link rel="stylesheet" th:href="@{/static/css/login.css}" media="all">
+    <!--[if lt IE 9]>
+    <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+    <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="main-body">
+    <div class="login-main">
+        <div class="login-top">
+            <span>LayuiMini后台登录</span>
+            <span class="bg1"></span>
+            <span class="bg2"></span>
+        </div>
+        <form class="layui-form login-bottom">
+            <div class="center">
+                <div class="item">
+                    <span class="icon icon-2"></span>
+                    <input type="text" name="userName" lay-verify="required" required="请输入登录账号" placeholder="请输入登录账号" maxlength="24"/>
+                </div>
+
+                <div class="item">
+                    <span class="icon icon-3"></span>
+                    <input type="password" name="password" lay-verify="required" required="请输入登录密码" placeholder="请输入密码" maxlength="20">
+                    <span class="bind-password icon icon-4"></span>
+                </div>
+
+                <div id="validatePanel" class="item" style="width: 137px;">
+                    <input type="text" name="verifyCode" placeholder="请输入验证码" required="请输入验证码" maxlength="4" lay-verify="required">
+                    <img id="refreshVerifyCode" class="validateImg"  th:src="@{/getVerifyCode}" title="看不清楚？点击图片刷新验证码">
+                </div>
+
+            </div>
+            <div class="tip">
+                <span class="icon-nocheck" name="remember"></span>
+<!--                <input type="checkbox" name="remember">-->
+                <span class="login-tip">保持登录</span>
+                <a href="javascript:" class="forget-password">忘记密码？</a>
+            </div>
+            <div class="layui-form-item" style="text-align:center; width:100%;height:100%;margin:0px;">
+                <button class="login-btn" lay-submit lay-filter="login">立即登录</button>
+<!--                <a class="register-link"></a>-->
+            </div>
+        </form>
+    </div>
+</div>
+<div class="footer">
+    ©版权所有 2014-2018 叁贰柒工作室<span class="padding-5">|</span><a target="_blank" href="http://www.miitbeian.gov.cn">粤ICP备16006642号-2</a>
+</div>
+<script th:src="@{/static/lib/layui-v2.6.3/layui.js}" charset="utf-8"></script>
+<script th:inline="javascript" type="text/javascript">
+    layui.use(['form','jquery'], function () {
+        var $ = layui.jquery,
+            form = layui.form,
+            layer = layui.layer;
+
+        let contentPath = [[${#servletContext.contextPath}]];
+
+        // 登录过期的时候，跳出ifram框架
+        if (top.location != self.location) top.location = self.location;
+
+        $('.bind-password').on('click', function () {
+            if ($(this).hasClass('icon-5')) {
+                $(this).removeClass('icon-5');
+                $("input[name='password']").attr('type', 'password');
+            } else {
+                $(this).addClass('icon-5');
+                $("input[name='password']").attr('type', 'text');
+            }
+        });
+
+        $('.icon-nocheck').on('click', function () {
+            if ($(this).hasClass('icon-check')) {
+                $(this).removeClass('icon-check');
+            } else {
+                $(this).addClass('icon-check');
+            }
+        });
+
+        $(document).on('click','#refreshVerifyCode',function () {
+            refreshVerifyCode();
+        });
+
+        function refreshVerifyCode() {
+            let src = $("#refreshVerifyCode").attr('src');
+            $("#refreshVerifyCode").attr("src",src.replace(/\?.*$/, '') + '?' + Math.random());
+        }
+
+        // 进行登录操作
+        form.on('submit(login)', function (data) {
+            data = data.field;
+            $.post(contentPath+"/verify",{"verifyCode":data.verifyCode},function(result){
+                if(result.code === 200){
+                    $.post(contentPath+"/login",{"userName":data.userName,"password":data.password},function (loginResult) {
+                        if(loginResult.code === 200){
+                            layer.alert(loginResult.message,{icon:1});
+                            window.location = contentPath+"/index";
+                        }else{
+                            layer.alert(loginResult.message,{icon:2});
+                        }
+                    });
+                }else{
+                    layer.alert(result.message,{icon:2})
+                }
+                refreshVerifyCode();
+            });
+            return false;
+        });
+    });
+</script>
+</body>
+</html>
